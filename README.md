@@ -1,6 +1,7 @@
 # AstopShader
 
 ## Features
+* **Anisotropic reflection**
 
 ## Todo
 * Receiving Shadows

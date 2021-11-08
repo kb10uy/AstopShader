@@ -42,37 +42,23 @@ float3 world_light0_direction(float3 position_world)
     }
 }
 
-// 共通 Vertex Shader 処理
-FragmentInput vertex_main(VertexInput vi)
+// ReflectionProbe の内容を取得する。
+float3 get_reflection(float3 virw_dir, float3 position_world, float4x4 normals, float roughness)
 {
-    FragmentInput fi;
-    fi.position_clip = UnityObjectToClipPos(vi.position);
-    fi.position_world = mul(unity_ObjectToWorld, vi.position).xyz;
+    float3 ray_reflected = normalize(reflect(-virw_dir, normals[2].xyz));
 
-    fi.normal_world = UnityObjectToWorldNormal(vi.normal);
-    fi.tangent_world = UnityObjectToWorldDir(vi.tangent.xyz);
-    // float tangent_sign = vi.tangent.w * unity_WorldTransformParams.w;
-    // fi.binormal_world = cross(fi.normal_world, fi.tangent_world) * tangent_sign;
-
-    fi.uv_texture = vi.uv;
-
-    // Vertex Lighting
-    fi.light_vertex = 0.0;
-    #if UNITY_SHOULD_SAMPLE_SH
-        #if defined(VERTEXLIGHT_ON)
-            fi.light_vertex += Shade4PointLights(
-                unity_4LightPosX0, unity_4LightPosY0, unity_4LightPosZ0,
-                unity_LightColor[0].rgb, unity_LightColor[1].rgb, unity_LightColor[2].rgb, unity_LightColor[3].rgb,
-                unity_4LightAtten0, fi.position_world, fi.normal_world
-            );
-        #endif
-        fi.light_vertex += float4(max(0.0, ShadeSH9(float4(fi.normal_world, 1.0))), 1.0);
+    // Box projection
+    #if UNITY_SPECCUBE_BOX_PROJECTION
+    if (unity_SpecCube0_ProbePosition.w > 0) {
+        float deltaX = ((ray_reflected.x > 0 ? unity_SpecCube0_BoxMax.x : unity_SpecCube0_BoxMin.x) - position_world.x) / ray_reflected.x;
+        float deltaY = ((ray_reflected.y > 0 ? unity_SpecCube0_BoxMax.y : unity_SpecCube0_BoxMin.y) - position_world.y) / ray_reflected.y;
+        float deltaZ = ((ray_reflected.z > 0 ? unity_SpecCube0_BoxMax.z : unity_SpecCube0_BoxMin.z) - position_world.z) / ray_reflected.z;
+        float delta = min(min(deltaX, deltaY), deltaZ);
+        ray_reflected = ray_reflected * delta + (position_world - unity_SpecCube0_ProbePosition.xyz);
+    }
     #endif
 
-    // Fog
-    UNITY_TRANSFER_FOG(fi,fi.position_clip);
-
-    return fi;
+    return DecodeHDR(UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, ray_reflected, roughness * ROUGHNESS_REFLECTION_STEP), unity_SpecCube0_HDR);
 }
 
 #endif

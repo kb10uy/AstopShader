@@ -1,11 +1,10 @@
 #ifndef KUSAKA_PBR_INCLUDE
 #define KUSAKA_PBR_INCLUDE
 
-#include "UnityCG.cginc"
-#include "Lighting.cginc"
-#include "AutoLight.cginc"
-
 #define F0_DIELECTRIC 0.04
+#define M_PI 3.1415926535897
+#define M_TWO_PI 6.2831853071795
+#define M_HALF_PI 1.5707963267948
 
 // なす角が π/2 以下(内積が正)の場合 1 を、それ以外の場合 0 を返す。
 float towards_similar(float3 x, float3 y)
@@ -33,7 +32,7 @@ float d_beckmann(float3 halfway, float4x4 normals, float roughness)
     float dot_nh = dot(normal, halfway);
     float dot_nh2 = dot_nh * dot_nh;
     float exponential_term = exp((dot_nh2 - 1.0) / (alpha_b2 * dot_nh2));
-    return (reflects / (UNITY_PI * alpha_b2 * dot_nh2 * dot_nh2)) * exponential_term;
+    return (reflects / (M_PI * alpha_b2 * dot_nh2 * dot_nh2)) * exponential_term;
 }
 
 // GGX 法線分布関数の値を求める。
@@ -46,7 +45,7 @@ float d_ggx(float3 halfway, float4x4 normals, float roughness)
     float normal_term = dot(normal, halfway) / 1.0;
     float r = 1.0 + normal_term * normal_term * (alpha_g2 - 1.0);
 
-    return alpha_g2 / (UNITY_PI * r * r);
+    return alpha_g2 / (M_PI * r * r);
 }
 
 // Anisotropic GGX 法線分布関数の値を求める。
@@ -69,7 +68,7 @@ float d_ggx_anisotropy(float3 halfway, float4x4 normals, float roughness, float 
         binormal_term * binormal_term +
         normal_term * normal_term;
 
-    return 1.0 / (UNITY_PI * alpha_x * alpha_y * anisotropic_roughness * anisotropic_roughness);
+    return 1.0 / (M_PI * alpha_x * alpha_y * anisotropic_roughness * anisotropic_roughness);
 }
 
 // Masking/Shadowing Function  ------------------------------------------------
@@ -139,7 +138,7 @@ float3 brdf_specular_anisotropic(float3 view_dir, float3 light_dir, float4x4 nor
 // Diffuse BRDF を計算する。
 float3 brdf_diffuse(float3 color, float3 f0)
 {
-    return (1.0 - f0) * (color / UNITY_PI);
+    return (1.0 - f0) * (color / M_PI);
 }
 
 #endif
