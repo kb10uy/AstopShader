@@ -2,9 +2,11 @@
 #define KUSAKA_PBR_INCLUDE
 
 #define F0_DIELECTRIC 0.04
+#define EPSILON 0.00001
 #define M_PI 3.1415926535897
 #define M_TWO_PI 6.2831853071795
 #define M_HALF_PI 1.5707963267948
+#define CT_DENOMINATOR_FLOOR 0.1
 
 // なす角が π/2 以下(内積が正)の場合 1 を、それ以外の場合 0 を返す。
 float towards_similar(float3 x, float3 y)
@@ -26,7 +28,7 @@ float fresnel_schlick(float3 normal, float3 light, float f0)
 float d_beckmann(float3 halfway, float4x4 normals, float roughness)
 {
     float3 normal = normals[2].xyz;
-    float alpha_b2 = max(0.000001, pow(roughness, 4.0));
+    float alpha_b2 = max(EPSILON, pow(roughness, 4.0));
 
     float reflects = towards_similar(halfway, normal);
     float dot_nh = dot(normal, halfway);
@@ -40,7 +42,7 @@ float d_beckmann(float3 halfway, float4x4 normals, float roughness)
 float d_ggx(float3 halfway, float4x4 normals, float roughness)
 {
     float3 normal = normals[2].xyz;
-    float alpha_g2 = max(0.000001, pow(roughness, 4.0));
+    float alpha_g2 = max(EPSILON, pow(roughness, 4.0));
 
     float normal_term = dot(normal, halfway) / 1.0;
     float r = 1.0 + normal_term * normal_term * (alpha_g2 - 1.0);
@@ -57,8 +59,8 @@ float d_ggx_anisotropy(float3 halfway, float4x4 normals, float roughness, float 
     float3 normal = normals[2].xyz;
 
     float aspect = sqrt(1.0 - 0.9 * anisotropy);
-    float alpha_x = max(0.000001, roughness * roughness / aspect);
-    float alpha_y = max(0.000001, roughness * roughness * aspect);
+    float alpha_x = max(EPSILON, roughness * roughness / aspect);
+    float alpha_y = max(EPSILON, roughness * roughness * aspect);
 
     float tangent_term = dot(tangent, halfway) / alpha_x;
     float binormal_term = dot(binormal, halfway) / alpha_y;
@@ -81,8 +83,8 @@ float lambda_a2_ggx_anisotropy(float3 view, float4x4 normals, float roughness, f
     float3 normal = normals[2].xyz;
 
     float aspect = sqrt(1.0 - 0.9 * anisotropy);
-    float alpha_x = max(0.000001, roughness * roughness / aspect);
-    float alpha_y = max(0.000001, roughness * roughness * aspect);
+    float alpha_x = max(EPSILON, roughness * roughness / aspect);
+    float alpha_y = max(EPSILON, roughness * roughness * aspect);
 
     float dot_ns = dot(normal, view);
     float dot_ts = dot(tangent, view);
@@ -94,10 +96,9 @@ float lambda_a2_ggx_anisotropy(float3 view, float4x4 normals, float roughness, f
 // G2 DDX マスキング関数の値を求める。
 float g2_ddx(float3 view, float3 light, float4x4 normals, float roughness)
 {
-    float3 halfway = normalize(view + light);
     float dot_vn = dot(view, normals[2].xyz);
     float dot_ln = dot(light, normals[2].xyz);
-    float alpha2 = max(0.000001, roughness * roughness * roughness * roughness);
+    float alpha2 = max(EPSILON, roughness * roughness * roughness * roughness);
     float lambda = (sqrt(1.0 + 1.0 / alpha2) - 1.0) / 2.0;
 
     return 1.0 / (1.0 + lambda * 2.0 + 1.0);
@@ -106,10 +107,9 @@ float g2_ddx(float3 view, float3 light, float4x4 normals, float roughness)
 // Anisotropic G2 DDX マスキング関数の値を求める。
 float g2_ddx_anisotropy(float3 view, float3 light, float4x4 normals, float roughness, float anisotropy)
 {
-    float3 halfway = normalize(view + light);
     float dot_vn = dot(view, normals[2].xyz);
     float dot_ln = dot(light, normals[2].xyz);
-    float alpha2 = lambda_a2_ggx_anisotropy(view, normals, roughness, anisotropy);
+    float alpha2 = max(EPSILON, lambda_a2_ggx_anisotropy(view, normals, roughness, anisotropy));
     float lambda = (sqrt(1.0 + 1.0 / alpha2) - 1.0) / 2.0;
 
     return 1.0 / (1.0 + lambda * 2.0 + 1.0);
@@ -131,8 +131,11 @@ float3 brdf_specular_anisotropic(float3 view_dir, float3 light_dir, float4x4 nor
         fresnel_schlick(halfway, light_dir, f0.b)
     );
 
-    float denominator = 4.0 * abs(dot(normal, light_dir) * dot(normal, view_dir));
-    return d * g * f_spec / denominator;
+    float dot_nl = max(0.0, dot(normal, light_dir));
+    float dot_nv = max(0.0, dot(normal, view_dir));
+    float floored_dots = (abs(dot_nl * dot_nv) + CT_DENOMINATOR_FLOOR) / (1.0 + CT_DENOMINATOR_FLOOR);
+    float denominator = 4.0 * floored_dots;
+    return d * g * f_spec / max(EPSILON, denominator);
 }
 
 // Diffuse BRDF を計算する。

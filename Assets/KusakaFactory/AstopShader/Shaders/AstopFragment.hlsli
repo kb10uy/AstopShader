@@ -82,7 +82,7 @@ float4 fragment_main(FragmentInput fi) : SV_Target
             fresnel_schlick(normals[2].xyz, view_dir, f0.g),
             fresnel_schlick(normals[2].xyz, view_dir, f0.b)
         );
-        float3 light_reflection = f_reflection * reflection;
+        float3 light_reflection = reflection * f_reflection;
         light_sum.rgb += light_reflection;
     #endif
 
