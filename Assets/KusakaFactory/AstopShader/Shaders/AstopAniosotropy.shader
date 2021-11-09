@@ -21,9 +21,11 @@ Shader "KusakaFactory/AstopAniosotropy"
         _NormalMap          ("Normal Map",                2D              ) = "bump" {}
         _Anisotropy         ("Anisotropy",                Range (0.0, 1.0)) = 0.0
         _TangentMap         ("Tangent Map",               2D              ) = "red" {}
+        [AstopToggle]
         _IsAngleMap         ("Enable Angle Map",          Range (0.0, 1.0)) = 0.0
 
         // Unity 互換性倍率
+        [AstopToggle]
         _UnityCompatibility ("Unity compatible lighting", Range (0.0, 1.0)) = 1.0
     }
 

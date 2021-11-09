@@ -27,7 +27,7 @@ FragmentInput vertex_main(VertexInput vi)
                 unity_4LightAtten0, fi.position_world, fi.normal_world
             );
         #endif
-        fi.light_vertex += float4(max(0.0, ShadeSH9(float4(fi.normal_world, 1.0))), 1.0);
+        fi.light_vertex += max(0.0, ShadeSH9(float4(fi.normal_world, 1.0)));
     #endif
 
     // Fog

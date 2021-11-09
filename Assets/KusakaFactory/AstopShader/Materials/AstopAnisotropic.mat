@@ -89,11 +89,11 @@ Material:
     - _Glossiness: 0
     - _GlossyReflections: 1
     - _IsAngleMap: 1
-    - _Metallic: 0
+    - _Metallic: 1
     - _Mode: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.02
-    - _Roughness: 0.355
+    - _Roughness: 0.305
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
