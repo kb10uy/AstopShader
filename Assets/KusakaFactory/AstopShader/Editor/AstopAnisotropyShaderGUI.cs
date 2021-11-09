@@ -3,6 +3,16 @@ using UnityEditor;
 
 namespace KusakaFactory
 {
+    public class AstopToggleDrawer : MaterialPropertyDrawer
+    {
+        public override void OnGUI(Rect position, MaterialProperty prop, GUIContent label, MaterialEditor editor)
+        {
+            bool previousValue = prop.floatValue >= 0.5f;
+            bool newValue = EditorGUI.Toggle(position, label, previousValue);
+            prop.floatValue = newValue ? 1.0f : 0.0f;
+        }
+    }
+
     public class AstopAnisotropyShaderGUI : ShaderGUI
     {
         private MaterialProperty _Color;
